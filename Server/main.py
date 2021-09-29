@@ -27,7 +27,7 @@ class Server(Thread):
         self.lock = lock
         self.sizefile = sizefile
     def run(self):
-        input_data=self.conn.recv(SIZE).decode(FORMAT)
+        input_data=self.conn.recv(SIZE)
         print(input_data)
         if self.file_id==1:
             file_name = "../Data/10.txt"
@@ -38,8 +38,8 @@ class Server(Thread):
         dataEn=data.encode(FORMAT)
         dataHash = hashlib.md5(dataEn).hexdigest()
         sf = str(self.sizefile)
-        self.conn.send(sf.encode(FORMAT))
-        self.conn.send(dataHash.encode(FORMAT))
+        self.conn.send(sf)
+        self.conn.send(dataHash)
         print("Hash:",dataHash)
         time_inicio = time.time()
         paquetes = 0
@@ -54,8 +54,8 @@ class Server(Thread):
                 paquetes+=1
             break
         print("Archivo enviado correctamente")
-        self.conn.send("Termino:200".encode(FORMAT))
-        recibido = self.conn.recv(SIZE).decode(FORMAT)
+        self.conn.send("Termino:200")
+        recibido = self.conn.recv(SIZE)
         time_final = time.time()
         contenido_output = ""
         contenido_output +="Tiempo de transferencia para cliente "+str(self.addr)+" es "+ str(time_final-time_inicio)+"\n"

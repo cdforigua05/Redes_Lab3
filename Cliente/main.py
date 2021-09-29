@@ -26,13 +26,13 @@ class Client(Thread):
     def run(self):
         print("Cliente "+str(self.i)+" iniciando conexión")
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(("localhost", 9879))
+        s.connect(("192.168.61.128", 9879))
         print("Cliente "+str(self.i)+ " conectado")
         
-        s.send('Start transmision OK'.encode(FORMAT))
+        s.send('Start transmision OK')
         filename = "ArchivosRecibidos/Cliente"+str(self.i)+"-Prueba-"+str(args.threads)
-        sizefile = s.recv(SIZE).decode(FORMAT)
-        dataHash = s.recv(SIZE).decode(FORMAT)
+        sizefile = s.recv(SIZE)
+        dataHash = s.recv(SIZE)
         print(str(self.i)+"hash:"+dataHash)
         data = ""
         i=0
@@ -41,7 +41,7 @@ class Client(Thread):
         bytes_enviados = 0
         while True:
             try:
-                input_data = s.recv(SIZE).decode(FORMAT)
+                input_data = s.recv(SIZE)
                 paquetes+=1
             except error:
                 print ("Error de lectura")
@@ -77,11 +77,11 @@ class Client(Thread):
             file.close()
             print("hash correcto cliente "+str(self.i))
             contenido_output += "Archivo recibido correctamente por cliente "+str(self.i)+"\n"
-            s.send(("hash correcto cliente "+str(self.i)).encode(FORMAT))
+            s.send(("hash correcto cliente "+str(self.i)))
         else:
             print("hash incorrecto cliente "+str(self.i))
             contenido_output +="Archivo NO recibido correctamente por cliente"+str(self.i)+"\n"
-            s.send(("hash correcto cliente "+str(self.i)).encode(FORMAT))        
+            s.send(("hash correcto cliente "+str(self.i)))        
         contenido_output+="\n"
         self.lock.acquire()
         self.logger.write(contenido_output)
