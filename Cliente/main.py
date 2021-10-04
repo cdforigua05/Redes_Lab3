@@ -26,19 +26,21 @@ class Client(Thread):
     def run(self):
         print("Cliente "+str(self.i)+" iniciando conexión")
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(("192.168.61.128", 9879))
+        s.connect(("localhost", 9879))
         print("Cliente "+str(self.i)+ " conectado")
         
-        s.send('Start transmision OK')
+        s.send(b'Start transmision OK')
         filename = "ArchivosRecibidos/Cliente"+str(self.i)+"-Prueba-"+str(args.threads)
         sizefile = s.recv(SIZE)
         dataHash = s.recv(SIZE)
-        print(str(self.i)+"hash:"+dataHash)
+        print(str(self.i)+"hash:"+dataHash.decode(FORMAT))
         data = ""
         i=0
         time_inicio = time.time()
         paquetes = 0
         bytes_enviados = 0
+        file = open(filename, "wb")
+
         while True:
             try:
                 input_data = s.recv(SIZE)
@@ -49,13 +51,16 @@ class Client(Thread):
             else:
                 if input_data:
                     # Compatibilidad con Python 3.
-                    if input_data.endswith("Termino:200"):
-                        data+=input_data.replace("Termino:200","")
-                        bytes_enviados+=len(input_data.replace("Termino:200",""))
+                    if input_data.endswith(b"Termino:200"):
+                        #data+=input_data.replace(b"Termino:200",b"")
+                        file.write(input_data.replace(b"Termino:200",b""))
+                        file.close()
+                        bytes_enviados+=len(input_data.replace(b"Termino:200",b""))
                         break
                     else:
                         # Almacenar datos.
-                        data+=input_data
+                        # data+=input_data.decode(FORMAT)
+                        file.write(input_data)
                         bytes_enviados+=len(input_data)
                         
         print("Archivo recibido por completo en el cliente", self.i)
@@ -67,21 +72,23 @@ class Client(Thread):
         contenido_output += "Bytes recibidos por el cliente "+str(self.i)+" son "+ str(bytes_enviados)+"\n"
         #data = s.recv(SIZE).decode(FORMAT)
         #print(str(self.i)+"Data:"+data)
-        data= data.encode(FORMAT)
+        #data= data.encode(FORMAT)
+        file = open(filename,"rb")
+        data = file.read()
         vhash = hashlib.md5(data).hexdigest()
         print(str(self.i)+"vhash:"+vhash)
-        print(str(self.i)+"dataHash:"+dataHash)
-        if vhash==dataHash:
-            file = open(filename, "wb")
-            file.write(data)
-            file.close()
+        print(str(self.i)+"dataHash:"+dataHash.decode(FORMAT))
+        if vhash==dataHash.decode(FORMAT):
+            #file = open(filename, "wb")
+            #file.write(data)
+            #file.close()
             print("hash correcto cliente "+str(self.i))
             contenido_output += "Archivo recibido correctamente por cliente "+str(self.i)+"\n"
-            s.send(("hash correcto cliente "+str(self.i)))
+            s.send((b"hash correcto cliente "+str(self.i).encode(FORMAT)))
         else:
             print("hash incorrecto cliente "+str(self.i))
             contenido_output +="Archivo NO recibido correctamente por cliente"+str(self.i)+"\n"
-            s.send(("hash correcto cliente "+str(self.i)))        
+            s.send((b"hash correcto cliente "+str(self.i).encode(FORMAT)))        
         contenido_output+="\n"
         self.lock.acquire()
         self.logger.write(contenido_output)
@@ -107,4 +114,9 @@ def main(args):
 
 if __name__ == "__main__":
     args = parser.parse_args()
+    if not os.path.isdir("./logs"):
+        os.mkdir("./logs")
+    if not os.path.isdir("./ArchivosRecibidos"):
+        os.mkdir("./ArchivosRecibidos")
+
     main(args)

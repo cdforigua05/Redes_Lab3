@@ -30,16 +30,16 @@ class Server(Thread):
         input_data=self.conn.recv(SIZE)
         print(input_data)
         if self.file_id==1:
-            file_name = "../Data/10.txt"
+            file_name = "../Data/100.txt"
         else:
-            file_name = "../Data/10.txt"
+            file_name = "../Data/250.txt"
         file = open(file_name, "r")
         data = file.read()
         dataEn=data.encode(FORMAT)
         dataHash = hashlib.md5(dataEn).hexdigest()
         sf = str(self.sizefile)
-        self.conn.send(sf)
-        self.conn.send(dataHash)
+        self.conn.send(sf.encode(FORMAT))
+        self.conn.send(dataHash.encode(FORMAT))
         print("Hash:",dataHash)
         time_inicio = time.time()
         paquetes = 0
@@ -54,7 +54,7 @@ class Server(Thread):
                 paquetes+=1
             break
         print("Archivo enviado correctamente")
-        self.conn.send("Termino:200")
+        self.conn.send(b"Termino:200")
         recibido = self.conn.recv(SIZE)
         time_final = time.time()
         contenido_output = ""
@@ -63,7 +63,7 @@ class Server(Thread):
         contenido_output += "Bytes enviados al cliente "+str(self.addr)+" son "+ str(bytes_enviados)+"\n"
 
         print(recibido)
-        if not "incorrecto" in recibido:
+        if not b"incorrecto" in recibido:
             contenido_output += "Transferencia exitosa para cliente "+str(self.addr)+"\n"
         else:
             contenido_output +="Transferencia NO exitosa para cliente "+str(self.addr)+"\n"
@@ -109,4 +109,6 @@ def main(args):
 
 if __name__ == "__main__":
     args = parser.parse_args()
+    if not os.path.isdir("./logs"):
+        os.mkdir("./logs")
     main(args)
